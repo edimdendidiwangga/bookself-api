@@ -1,42 +1,47 @@
 const {
-  addBookHandler,
-  getAllBooksHandler,
-  getBookByIdHandler,
-  editBookByIdHandler,
-  deleteBookByIdHandler,
+  addBook,
+  getAllBooks,
+  getBookById,
+  editBookById,
+  deleteBookById,
 } = require('./handler');
 
-const routes = [
+const bookRoutes = [
   {
     method: 'POST',
     path: '/books',
-    handler: addBookHandler,
+    handler: addBook,
   },
   {
     method: 'GET',
     path: '/books',
-    handler: getAllBooksHandler,
+    handler: getAllBooks,
   },
   {
     method: 'GET',
     path: '/books/{bookId}',
-    handler: getBookByIdHandler,
+    handler: getBookById,
   },
   {
     method: 'PUT',
     path: '/books/{bookId}',
-    handler: editBookByIdHandler,
+    handler: editBookById,
   },
   {
     method: 'DELETE',
     path: '/books/{bookId}',
-    handler: deleteBookByIdHandler,
-  },
-  {
-    method: 'GET',
-    path: '/',
-    handler: getAllBooksHandler,
+    handler: deleteBookById,
   },
 ];
 
-module.exports = routes;
+const rootRoute = {
+  method: 'GET',
+  path: '/',
+  handler: (request, h) => {
+    // Handle the root route here if needed
+    // For example, you can provide a welcome message
+    return h.response('Welcome to the Book API').code(200);
+  },
+};
+
+module.exports = [...bookRoutes, rootRoute];
