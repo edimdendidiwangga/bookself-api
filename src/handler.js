@@ -1,23 +1,26 @@
 const { nanoid } = require('nanoid');
 const books = require('./books');
 
+// Create an API response object
 const createApiResponse = (status, message, data = null) => ({
   status,
   message,
   ...(data !== null && { data }),
 });
 
+// Add a new book to the library
 const addBook = (request, h) => {
   const {
     name, year, author, summary, publisher, pageCount, readPage, reading,
   } = request.payload;
 
+  // Validate input
   if (!name) {
-    return h.response(createApiResponse('fail', 'Gagal menambahkan buku. Mohon isi nama buku')).code(400);
+    return h.response(createApiResponse('fail', 'Failed to add a book. Please provide the book name')).code(400);
   }
 
   if (readPage > pageCount) {
-    return h.response(createApiResponse('fail', 'Gagal menambahkan buku. readPage tidak boleh lebih besar dari pageCount')).code(400);
+    return h.response(createApiResponse('fail', 'Failed to add a book. The readPage cannot be greater than pageCount')).code(400);
   }
 
   const id = nanoid(16);
@@ -45,19 +48,28 @@ const addBook = (request, h) => {
   const isSuccess = books.some((book) => book.id === id);
 
   if (isSuccess) {
-    return h.response(createApiResponse('success', 'Buku berhasil ditambahkan', { bookId: id })).code(201);
+    return h
+      .response(createApiResponse('success', 'Book added successfully', { bookId: id }))
+      .code(201);
   }
 
-  return h.response(createApiResponse('error', 'Buku gagal ditambahkan')).code(500);
+  return h.response(createApiResponse('error', 'Failed to add the book')).code(500);
 };
 
+// Get a list of all books with optional filters
 const getAllBooks = (request, h) => {
   const { name, reading, finished } = request.query;
 
   let filteredBooks = [...books];
 
+  // Helper function to filter by a property
+  const filterByProperty = (arr, property, searchTerm) => {
+    const searchTermLower = searchTerm.toLowerCase();
+    return arr.filter((item) => item[property].toLowerCase().includes(searchTermLower));
+  };
+
   if (name) {
-    filteredBooks = filteredBooks.filter((book) => book.name.toLowerCase().includes(name.toLowerCase()));
+    filteredBooks = filterByProperty(filteredBooks, 'name', name);
   }
 
   if (reading !== undefined) {
@@ -68,6 +80,7 @@ const getAllBooks = (request, h) => {
     filteredBooks = filteredBooks.filter((book) => Number(book.finished) === Number(finished));
   }
 
+  // Return a simplified list of books
   const listBooks = filteredBooks.map((book) => ({
     id: book.id,
     name: book.name,
@@ -77,6 +90,7 @@ const getAllBooks = (request, h) => {
   return h.response(createApiResponse('success', 'Books retrieved successfully', { books: listBooks })).code(200);
 };
 
+// Get a book by its ID
 const getBookById = (request, h) => {
   const { bookId } = request.params;
 
@@ -86,9 +100,10 @@ const getBookById = (request, h) => {
     return h.response(createApiResponse('success', 'Book retrieved successfully', { book })).code(200);
   }
 
-  return h.response(createApiResponse('fail', 'Buku tidak ditemukan')).code(404);
+  return h.response(createApiResponse('fail', 'Book not found')).code(404);
 };
 
+// Edit a book by its ID
 const editBookById = (request, h) => {
   const { bookId } = request.params;
 
@@ -98,12 +113,13 @@ const editBookById = (request, h) => {
   const updatedAt = new Date().toISOString();
   const index = books.findIndex((book) => book.id === bookId);
 
+  // Validate input
   if (!name) {
-    return h.response(createApiResponse('fail', 'Gagal memperbarui buku. Mohon isi nama buku')).code(400);
+    return h.response(createApiResponse('fail', 'Failed to update the book. Please provide the book name')).code(400);
   }
 
   if (readPage > pageCount) {
-    return h.response(createApiResponse('fail', 'Gagal memperbarui buku. readPage tidak boleh lebih besar dari pageCount')).code(400);
+    return h.response(createApiResponse('fail', 'Failed to update the book. The readPage cannot be greater than pageCount')).code(400);
   }
 
   if (index !== -1) {
@@ -120,12 +136,13 @@ const editBookById = (request, h) => {
       updatedAt,
     };
 
-    return h.response(createApiResponse('success', 'Buku berhasil diperbarui')).code(200);
+    return h.response(createApiResponse('success', 'Book updated successfully')).code(200);
   }
 
-  return h.response(createApiResponse('fail', 'Gagal memperbarui buku. Id tidak ditemukan')).code(404);
+  return h.response(createApiResponse('fail', 'Failed to update the book. Id not found')).code(404);
 };
 
+// Delete a book by its ID
 const deleteBookById = (request, h) => {
   const { bookId } = request.params;
 
@@ -133,10 +150,10 @@ const deleteBookById = (request, h) => {
 
   if (index !== -1) {
     books.splice(index, 1);
-    return h.response(createApiResponse('success', 'Buku berhasil dihapus')).code(200);
+    return h.response(createApiResponse('success', 'Book deleted successfully')).code(200);
   }
 
-  return h.response(createApiResponse('fail', 'Buku gagal dihapus. Id tidak ditemukan')).code(404);
+  return h.response(createApiResponse('fail', 'Failed to delete the book. Id not found')).code(404);
 };
 
 module.exports = {

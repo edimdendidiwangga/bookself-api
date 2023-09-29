@@ -37,11 +37,7 @@ const bookRoutes = [
 const rootRoute = {
   method: 'GET',
   path: '/',
-  handler: (request, h) => {
-    // Handle the root route here if needed
-    // For example, you can provide a welcome message
-    return h.response('Welcome to the Book API').code(200);
-  },
+  handler: (request, h) => h.response('Welcome to the Book API').code(200),
 };
 
 module.exports = [...bookRoutes, rootRoute];
