@@ -8,13 +8,16 @@ const createApiResponse = (status, message, data = null) => ({
   ...(data !== null && { data }),
 });
 
-// Add a new book to the library
-const addBook = (request, h) => {
-  const {
-    name, year, author, summary, publisher, pageCount, readPage, reading,
-  } = request.payload;
+// Helper function to filter by a property
+const filterByProperty = (arr, property, searchTerm) => {
+  const searchTermLower = searchTerm.toLowerCase();
+  return arr.filter((item) => item[property].toLowerCase().includes(searchTermLower));
+};
 
-  // Validate input
+// Validate input for book properties
+const validateBookInput = (request, h) => {
+  const { name, pageCount, readPage } = request.payload;
+
   if (!name) {
     return h.response(createApiResponse('fail', 'Gagal menambahkan buku. Mohon isi nama buku')).code(400);
   }
@@ -22,6 +25,15 @@ const addBook = (request, h) => {
   if (readPage > pageCount) {
     return h.response(createApiResponse('fail', 'Gagal menambahkan buku. readPage tidak boleh lebih besar dari pageCount')).code(400);
   }
+
+  return null; // Input is valid
+};
+
+// Add a new book to the library
+const addBook = (request, h) => {
+  const {
+    name, year, author, summary, publisher, pageCount, readPage, reading,
+  } = request.payload;
 
   const id = nanoid(16);
   const finished = pageCount === readPage;
@@ -56,9 +68,26 @@ const addBook = (request, h) => {
   return h.response(createApiResponse('error', 'Buku gagal ditambahkan')).code(500);
 };
 
-// Get a list of all books
+// Get a list of all books with optional filters
 const getAllBooks = (request, h) => {
-  const listBooks = books.map((book) => ({
+  const { name, reading, finished } = request.query;
+
+  let filteredBooks = [...books];
+
+  if (name) {
+    filteredBooks = filterByProperty(filteredBooks, 'name', name);
+  }
+
+  if (reading !== undefined) {
+    filteredBooks = filteredBooks.filter((book) => Number(book.reading) === Number(reading));
+  }
+
+  if (finished !== undefined) {
+    filteredBooks = filteredBooks.filter((book) => Number(book.finished) === Number(finished));
+  }
+
+  // Return a simplified list of books
+  const listBooks = filteredBooks.map((book) => ({
     id: book.id,
     name: book.name,
     publisher: book.publisher,
@@ -90,13 +119,10 @@ const editBookById = (request, h) => {
   const updatedAt = new Date().toISOString();
   const index = books.findIndex((book) => book.id === bookId);
 
-  // Validate input
-  if (!name) {
-    return h.response(createApiResponse('fail', 'Gagal memperbarui buku. Mohon isi nama buku')).code(400);
-  }
+  const validationError = validateBookInput(request, h);
 
-  if (readPage > pageCount) {
-    return h.response(createApiResponse('fail', 'Gagal memperbarui buku. readPage tidak boleh lebih besar dari pageCount')).code(400);
+  if (validationError) {
+    return validationError;
   }
 
   if (index !== -1) {

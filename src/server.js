@@ -2,7 +2,7 @@ const Hapi = require('@hapi/hapi');
 const routes = require('./routes');
 
 const config = {
-  port: 5000,
+  port: 9000,
   host: 'localhost',
   routes: {
     cors: {
